@@ -1,0 +1,41 @@
+name: Daily Database Backup
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: pip install flask werkzeug
+        
+    - name: Download database from server
+      env:
+        SERVER_URL: ${{ secrets.SERVER_URL }}
+        SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      run: |
+        # Add your server download logic here
+        echo "Download database from your server"
+        
+    - name: Run backup script
+      run: python backup.py
+      
+    - name: Commit and push backups
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add backups/
+        git commit -m "Daily database backup" || exit 0
+        git push
